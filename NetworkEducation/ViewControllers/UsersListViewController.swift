@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Alamofire
 
 protocol NewUserViewControllerDelegate{
     func createUser(_ user: User)
@@ -23,10 +24,8 @@ final class UsersListViewController: UITableViewController {
         navigationItem.title = "Заголовок"
         navigationController?.navigationBar.prefersLargeTitles = true
         
-//        fetchUsers()
-        Task {
-            await fetch()
-        }
+        fetchUsers()
+                
         showSpinner(in: tableView)
         
     }
@@ -50,8 +49,8 @@ final class UsersListViewController: UITableViewController {
     
     // MARK: - Private methods
     
-    private func showAlert(withError networkError: NetworkError) {
-        let alert = UIAlertController(title: networkError.title, message: nil, preferredStyle: .alert)
+    private func showAlert(withError networkError: AFError) {
+        let alert = UIAlertController(title: networkError.localizedDescription, message: nil, preferredStyle: .alert)
         let okAction = UIAlertAction(title: "OK", style: .default)
         alert.addAction(okAction)
         present(alert, animated: true)
@@ -77,38 +76,23 @@ final class UsersListViewController: UITableViewController {
 // MARK: - Networking
 
 extension UsersListViewController {
-//    private func fetchUsers() {
-//        networkManager.fetchUsers { [weak self] result in
-//            self?.activityIndicator.stopAnimating()
-//
-//            switch result {
-//
-//            case .success(let users):
-//                self?.users = users
-//
-//            case .failure(let error):
-//                print("error in fetchUsers - \(error)")
-//                self?.showAlert(withError: error)
-//            }
-//            self?.tableView.reloadData()
-//        }
-//    }
-    
-    private func fetch() async {
-        Task {
-            let result = try await networkManager.fetchUsers()
-            activityIndicator.stopAnimating()
+    private func fetchUsers() {
+        networkManager.fetchUsers { [weak self] result in
+            self?.activityIndicator.stopAnimating()
 
             switch result {
+
             case .success(let users):
-                self.users = users
+                self?.users = users
+
             case .failure(let error):
                 print("error in fetchUsers - \(error)")
-                self.showAlert(withError: error)
+                self?.showAlert(withError: error)
             }
-            self.tableView.reloadData()
+            self?.tableView.reloadData()
         }
     }
+    
     
     private func post(user: User) {
         networkManager.post(user) { [weak self] result in
@@ -125,23 +109,14 @@ extension UsersListViewController {
     }
     
     private func deleteUserWith(id: Int, at indexPath: IndexPath) {
-//        старый способ конфигурации удаления
-//        networkManager.deleteUser(with: id) { [weak self] success in
-//            if success {
-//                print("User \(id) is deleted")
-//                self?.users.remove(at: indexPath.row)
-//                self?.tableView.deleteRows(at: [indexPath], with: .automatic)
-//            } else {
-//                self?.showAlert(withError: .deleteError)
-//            }
-//        }
-        
-        Task {
-            if try await networkManager.deleteUserWithId(id) {
-                users.remove(at: indexPath.row)
-                tableView.deleteRows(at: [indexPath], with: .automatic)
+        // старый способ конфигурации удаления
+        networkManager.deleteUser(with: id) { [weak self] success in
+            if success {
+                print("User \(id) is deleted")
+                self?.users.remove(at: indexPath.row)
+                self?.tableView.deleteRows(at: [indexPath], with: .automatic)
             } else {
-                showAlert(withError: .deleteError)
+                self?.showAlert(withError: .explicitlyCancelled)
             }
         }
     }
