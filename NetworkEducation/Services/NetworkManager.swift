@@ -47,27 +47,15 @@ final class NetworkManager {
     func fetchUsers(completion: @escaping (Result<[User], NetworkError>) -> Void) {
         URLSession.shared.dataTask(with: Link.allUsers.url) { data, response, error in
             
-            // проверяем номер ответа по url
             guard let data, let response = response as? HTTPURLResponse else {
                 print(error?.localizedDescription ?? "No error description")
                 sendFailure(with: .noData)
                 return
             }
-            
-            /* проверяем, есть ли дата в ответе
-             guard let data else {
-             print(error?.localizedDescription ?? "No description")
-             sendFailure(with: .noData)
-             return
-             }
-             */
-            
-            // проверяем статус ошибки в response
+
             if (200...299).contains(response.statusCode) {
                 
-                // деокдируем данные
                 let decoder = JSONDecoder()
-                // конвертируем из snakecase
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 
                 do {
@@ -94,7 +82,6 @@ final class NetworkManager {
     }
     
     
-    // более новый способ получения данных пользователей с помощью async throws
     func fetchUsers() async throws -> Result<[User], NetworkError> {
         let (data, response) = try await URLSession.shared.data(from: Link.allUsers.url)
 
@@ -103,9 +90,7 @@ final class NetworkManager {
         }
         
         if (200...299).contains(response.statusCode) {
-            // деокдируем данные
             let decoder = JSONDecoder()
-            // конвертируем из snakecase
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             
             do {
@@ -159,7 +144,6 @@ final class NetworkManager {
         }.resume()
     }
     
-    // новый способ удаления с помощью async throws
     func deleteUserWithId(_ id: Int) async throws -> Bool {
         let userURL = Link.singleUser.url.appending(component: "\(id)")
         var request = URLRequest(url: userURL)

@@ -23,7 +23,6 @@ final class UsersListViewController: UITableViewController {
         navigationItem.title = "Заголовок"
         navigationController?.navigationBar.prefersLargeTitles = true
         
-//        fetchUsers()
         Task {
             await fetch()
         }
@@ -77,22 +76,7 @@ final class UsersListViewController: UITableViewController {
 // MARK: - Networking
 
 extension UsersListViewController {
-//    private func fetchUsers() {
-//        networkManager.fetchUsers { [weak self] result in
-//            self?.activityIndicator.stopAnimating()
-//
-//            switch result {
-//
-//            case .success(let users):
-//                self?.users = users
-//
-//            case .failure(let error):
-//                print("error in fetchUsers - \(error)")
-//                self?.showAlert(withError: error)
-//            }
-//            self?.tableView.reloadData()
-//        }
-//    }
+
     
     private func fetch() async {
         Task {
@@ -114,7 +98,6 @@ extension UsersListViewController {
         networkManager.post(user) { [weak self] result in
             switch result {
             case .success(let postUserQuery):
-                // создать пользователя в usreList
                 print("\(postUserQuery)")
                 self?.users.append(User(postUserQuery: postUserQuery))
                 self?.tableView.reloadData()
@@ -125,16 +108,7 @@ extension UsersListViewController {
     }
     
     private func deleteUserWith(id: Int, at indexPath: IndexPath) {
-//        старый способ конфигурации удаления
-//        networkManager.deleteUser(with: id) { [weak self] success in
-//            if success {
-//                print("User \(id) is deleted")
-//                self?.users.remove(at: indexPath.row)
-//                self?.tableView.deleteRows(at: [indexPath], with: .automatic)
-//            } else {
-//                self?.showAlert(withError: .deleteError)
-//            }
-//        }
+
         
         Task {
             if try await networkManager.deleteUserWithId(id) {
@@ -157,27 +131,9 @@ extension UsersListViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "userCell") as? UserTableViewCell else { return UITableViewCell() }
         
-        // создаем пользователя для ячейки
         let user = users[indexPath.row]
         
         cell.configureCell(with: user)
-        /*
-         оформляем ячейку (для ячейки по умолчанию)
-         var content = cell.defaultContentConfiguration()
-         content.text = user.firstName
-         content.secondaryText = user.lastName
-         
-         content.image = UIImage(systemName: "face.smiling")
-         cell.contentConfiguration = content
-         
-         // подягиваем аватарку
-         networkManager.fetchAvatar(from: user.avatar) { imageData in
-         content.image = UIImage(data: imageData)
-         content.imageProperties.cornerRadius = tableView.rowHeight / 2
-         
-         cell.contentConfiguration = content
-         }
-         */
         return cell
     }
     
